@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [[ -f $1 ]]
+then
+  echo "File does not exist $1"
+fi
+
+if [[ -f $2 ]]
+then
+  echo "File does not exist $2"
+fi
+
+
+FILE1_LINE_AMOUNT=$(cat $1 | wc -l)
+FILE2_LINE_AMOUNT=$(cat $2 | wc -l)
+if [[ $FILE1_LINE_AMOUNT > $FILE2_LINE_AMOUNT ]]
+then
+  LINE_AMOUNT=$FILE1_LINE_AMOUNT
+else
+  LINE_AMOUNT=$FILE2_LINE_AMOUNT
+fi
+echo $LINE_AMOUNT
+for i in $( seq 0 $LINE_AMOUNT )
+do
+      LINE1=$(sed -n ${i}p "$1")
+      LINE2=$(sed -n ${i}p "$2")
+      if [[ "$LINE1" != "$LINE2" ]]
+      then
+          echo "Differences on Line: $i"
+          echo "$1: $LINE1 $2: $LINE2"
+      fi
+done
