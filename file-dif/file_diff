@@ -1,32 +1,60 @@
 #!/bin/bash
 
-if [[ -f $1 ]]
+#Name
+#file_diff
+#Synopsis
+#file_diff [FILE1] [FILE2]
+#OPTIONS: none.
+#Description
+#Script compares two files and prints the lines which are different.
+#Parameter
+#FILE1 and FILE2 are two files which have to exist.
+#Author
+#Linus Duttweiler
+
+
+#Checks if the script has two paramters
+if [[ -z "$1"  &&  -z "$2" ]]
+then
+    echo "You need to give two files."
+    exit 0
+fi
+
+#Checks if the first file exists
+if [[ ! -f "$1" ]]
 then
   echo "File does not exist $1"
+    exit 0
 fi
 
-if [[ -f $2 ]]
+#Checks if the second file exists
+if [[ ! -f "$2" ]]
 then
   echo "File does not exist $2"
+  exit 0
 fi
 
-
+#Gets the amount of lines of the two files
 FILE1_LINE_AMOUNT=$(cat $1 | wc -l)
 FILE2_LINE_AMOUNT=$(cat $2 | wc -l)
+#Compares the two amounts to determen how many lines to compare
 if [[ $FILE1_LINE_AMOUNT > $FILE2_LINE_AMOUNT ]]
 then
   LINE_AMOUNT=$FILE1_LINE_AMOUNT
 else
   LINE_AMOUNT=$FILE2_LINE_AMOUNT
 fi
-echo $LINE_AMOUNT
+#Counts from zero to the amount of lines
 for i in $( seq 0 $LINE_AMOUNT )
 do
+    #Gets each line i from the files
       LINE1=$(sed -n ${i}p "$1")
       LINE2=$(sed -n ${i}p "$2")
+      #If the lines differ they are printed
       if [[ "$LINE1" != "$LINE2" ]]
       then
           echo "Differences on Line: $i"
           echo "$1: $LINE1 $2: $LINE2"
       fi
 done
+#Done ;)
