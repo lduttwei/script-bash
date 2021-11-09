@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#Name
+#umgestalten
+#Synopsis
+#./umgestalten input output
+#OPTIONS: none.
+#Description
+#The script reduces the content of the preformatted Export.spl to certain information.
+#Parameter
+#$1 Input, $2 Output.
+#Author
+#Linus Duttweiler
+
+
+#Regex Filter 0-2
+awk '$1 ~ /^[0-2]$/ '  "$1" | \
+#Regex Filter 0-25 generieren. 
+awk '$2 ~ /^[0-25]$/'             | \
+# -F Spalte 2 und 4
+awk -F"'" '{print $2,"     ",$4}' | \
+#Hauptnummer
+awk 'length($1)==7' > "$2"
+

@@ -1,0 +1,52 @@
+#!/bin/bash
+
+#Name
+#number_guesser
+#Synopsis
+#./number_guesser
+#OPTIONS: none.
+#Description
+#The script generates a random number (between 1 - 20) and gives you 5 tries to guess it.
+#Parameter
+#None.
+#Author
+#Linus Duttweiler
+
+#Ablauf:
+#Define Regex for number, random number and i
+#loop until i = 5
+#read input
+#answer according to input
+
+
+number=$[$RANDOM %20 +1]
+number_regex='^[0-9]+$'
+i=0
+
+until [[ i -eq 5 ]] 
+do
+	i=$((i+1))
+	echo "Tries: $i"
+	read input
+	if [[ $input =~ $number_regex ]]
+	then
+		if [[ $input -eq $number ]]
+		then
+			echo "Correct! You won."
+			i=5
+		fi
+		if [[ $input -gt $number ]]
+		then
+			echo "Try a smaller number."
+		fi
+		if [[ $input -lt $number ]]
+		then
+			echo "Try a bigger number."
+		fi
+	else
+		echo "Enter a number between 1 - 20"
+	fi
+
+
+done
+
