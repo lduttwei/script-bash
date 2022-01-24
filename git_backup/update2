@@ -1,0 +1,47 @@
+#!/bin/bash
+
+copy_files() {
+	input="paths"
+	file_regex='^- [A-Za-z._-]*$'
+	path=pwd
+	#read lines from the file containing folder and document information
+	while IFS= read -r line
+	do	
+		# if the line matches the regex to be a file its copied
+		if [[ $line =~ $file_regex ]] 
+		then
+			line=$(echo "$line" | sed 's/- *//')
+			copy_if_diff $path $line
+		else
+		# If it does not match the definition, it must be a folder
+			path="${line}"
+		fi
+	done < "$input"
+}
+
+copy() {
+	cp $1 $2
+}
+
+copy_if_diff() {
+	path=$1
+	file=$2
+	old=~/$path$file
+	new=$(pwd)/$path$file
+	echo $old $new
+	$(diff $old $new)
+	var=$?
+	if [ $var -eq 0 ]
+	then
+		echo "no diffs in $file"
+		return
+	else
+		mkdir -p $(pwd)/$path
+		#echo "coping $old -> $new"
+		copy $old $new
+	fi
+}
+
+copy_files
+git add * && git add *.*
+git commit -m ""$(date)"

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+files=(
+	"Documents/temp.png"
+	"Desktop/optimal.jpeg"
+)
+
+copy() {
+	cp $1 $2
+}
+
+copy_if_diff() {
+	diff $1 $2
+	var=$?
+	if [ $var -eq 0 ]
+	then
+		return
+	else
+		echo "coping $1 -> $2"
+		copy $1 $2
+	fi
+}
+
+for i in "${files[@]}"; do
+	echo $i
+	#copy_if_diff ~/$i $i
+done
