@@ -1,15 +1,21 @@
 #!/bin/bash
 
+VERBOSE=""
+
+# This function reads form the input file all the paths that were you have to check files.
+# It utilizes regex to parse if its a filename or directory. 
+# Then it copies each file to the current directory with the same folder structure. 
 copy_files() {
-	input="paths"
-	file_regex='^- [A-Za-z._-]*$'
-	path=pwd
+	local input=$1
+	local file_regex='^- [A-Za-z._-]*$'
+	local path=pwd
 	#read lines from the file containing folder and document information
 	while IFS= read -r line
 	do	
 		# if the line matches the regex to be a file its copied
 		if [[ $line =~ $file_regex ]] 
 		then
+			# cut the unneccessary parser information out
 			line=$(echo "$line" | sed 's/- *//')
 			copy_if_diff $path $line
 		else
@@ -19,29 +25,74 @@ copy_files() {
 	done < "$input"
 }
 
-copy() {
-	cp $1 $2
-}
-
+# This function checks the diffs, copies and creates the structure.
 copy_if_diff() {
-	path=$1
-	file=$2
-	old=~/$path$file
-	new=$(pwd)/$path$file
-	echo $old $new
-	$(diff $old $new)
-	var=$?
+	# path read from parser
+	local path=$1
+	# filename read from parser
+	local file=$2
+	# old destination - in user folder
+	local old_path=~/$path$file
+	# new destination - in current directory
+	local new_path=$(pwd)/$path$file
+	if [[ ! -z "$VERBOSE" ]]
+	then	
+		echo $old_path $new_path
+	fi
+	diff $old_path $new_path
+	# read what status diff had
+	local var=$?
 	if [ $var -eq 0 ]
 	then
-		echo "no diffs in $file"
+		# if read did not see any difference no action has to be made.
+		echo "NO DIFFS: $file"
 		return
 	else
-		mkdir -p $(pwd)/$path
-		#echo "coping $old -> $new"
-		copy $old $new
+		# If something changed the chagned file has to be copied into the current directory with the correct path.
+		echo "COPING: $old -> $new"
+		mkdir -p $path && cp $old "$_"
 	fi
 }
 
-copy_files
-git add * && git add *.*
-git commit -m ""$(date)"
+set_flag() {
+	local flag='^-v|--verbose$'
+	if [[ $1 =~ $flag ]] 
+	then
+		echo "setting verbose"
+		$VERBOSE="true"
+	fi
+}
+
+flag='^-v|--verbose$'
+default_input="paths"
+if [[ ! -z "$1" ]] && [[ ! -z "$2" ]] 
+then 
+	if [[ $1 =~ $flag ]] 
+	then
+		echo "Verbose mode"
+		VERBOSE="true"
+		copy_files $2
+	else
+		echo "unknown param: $1"
+	fi
+elif [[ ! -z "$1" ]]
+then
+	if [[ $1 =~ $flag ]] 
+	then
+		echo "Verbose mode"
+		VERBOSE="true"
+		copy_files $default_input
+	else
+		copy_files $1
+	fi
+else
+	copy_files $default_input
+fi
+
+# Git commands are commented out because this directory is currently in a git directory so it doesn't work.
+# To run the programm correctly, put it inside a designated folder with .git preferebly in the /home/$user directory
+
+#git add * && git add *.*
+#git commit -m "$(date)"
+
+echo "Everything went well!"
