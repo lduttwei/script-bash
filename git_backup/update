@@ -1,27 +1,119 @@
 #!/bin/bash
 
-files=(
-	"Documents/temp.png"
-	"Desktop/optimal.jpeg"
-)
+#Name
+#update
+#Synopsis
+#update [-v/--verbose] [input]
+#OPTIONS: verbose.
+#Description
+#Script reads the input file. From there it produces multiple pathes,
+#and mirrors the folder structure in the current directory.
+#Then it proceedes to copy each file listed inside the input file to their
+#respective folder inside the current directory.
+#The input file path can be passed as parameter or the programm searches
+#for a file named "paths" inside the current directory.
+#Parameter
+#input is a file containing the paths with my format: 
+#descriped inside the pdf on github.
+#Author
+#Linus Duttweiler
+#Date
+#25.01.2022
 
-copy() {
-	cp $1 $2
+VERBOSE=""
+
+# This function reads form the input file all the paths that were you have to check files.
+# It utilizes regex to parse if its a filename or directory. 
+# Then it copies each file to the current directory with the same folder structure. 
+copy_files() {
+	local input=$1
+	if test ! -f "$input"; then
+		echo "File does not exist: $input."	
+		return
+	fi
+	local file_regex='^- [A-Za-z._-]*$'
+	local path=pwd
+	#read lines from the file containing folder and document information
+	while IFS= read -r line
+	do	
+		# if the line matches the regex to be a file its copied
+		if [[ $line =~ $file_regex ]] 
+		then
+			# cut the unneccessary parser information out
+			line=$(echo "$line" | sed 's/- *//')
+			copy_if_diff $path $line
+		else
+		# If it does not match the definition, it must be a folder
+			path="${line}"
+		fi
+	done < "$input"
 }
 
+# This function checks the diffs, copies and creates the structure.
 copy_if_diff() {
-	diff $1 $2
-	var=$?
+	# path read from parser
+	local path=$1
+	# filename read from parser
+	local file=$2
+	# old destination - in user folder
+	local old_path=~/$path$file
+	# new destination - in current directory
+	local new_path=$(pwd)/$path$file
+	if [[ ! -z "$VERBOSE" ]]
+	then	
+		echo $old_path $new_path
+	fi
+	diff $old_path $new_path
+	# read what status diff had
+	local var=$?
 	if [ $var -eq 0 ]
 	then
+		# if read did not see any difference no action has to be made.
+		echo "NO DIFFS: $file"
 		return
 	else
-		echo "coping $1 -> $2"
-		copy $1 $2
+		# If something changed the chagned file has to be copied into the current directory with the correct path.
+		echo "COPING: $old_path -> $new_path"
+		mkdir -p $path && cp -r $old_path $new_path
 	fi
 }
 
-for i in "${files[@]}"; do
-	echo $i
-	#copy_if_diff ~/$i $i
-done
+flag='^-v|--verbose$'
+default_input="paths"
+# If there are two parameters.
+if [[ ! -z "$1" ]] && [[ ! -z "$2" ]] 
+then 
+	# The first parameter MUSt be --verbose/-b in this case. 
+	if [[ $1 =~ $flag ]] 
+	then
+		echo "Verbose mode"
+		VERBOSE="true"
+		# Second param is file location.
+		copy_files $2
+	else
+		echo "unknown param: $1"
+	fi
+# If theres one param.
+elif [[ ! -z "$1" ]]
+then
+	# Check if it matches the flag.
+	if [[ $1 =~ $flag ]] 
+	then
+		echo "Verbose mode"
+		VERBOSE="true"
+		copy_files $default_input
+	# Otherwise its the file location.
+	else
+		copy_files $1
+	fi
+else
+	copy_files $default_input
+fi
+
+# Git commands are commented out because this Programm is developped inside a git repository.
+# So it does not have its own git repository right now.
+# To run the programm correctly, put it inside a designated folder with .git preferebly in the /home/$user directory
+# and uncomment the git part.
+
+#git add * && git add *.*
+#git commit -m "$(date)"
